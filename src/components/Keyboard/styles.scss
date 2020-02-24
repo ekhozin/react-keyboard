@@ -1,0 +1,17 @@
+.Keyboard {
+  letter-spacing: -0.3rem;
+
+  & > * {
+    letter-spacing: normal;
+  }
+  
+  &, * {
+    box-sizing: border-box;
+  }
+}
+
+.KeyWrapper {
+  display: inline-block;
+  line-height: 0;
+  padding: 2px;
+}

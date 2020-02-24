@@ -1,0 +1,23 @@
+.Key {
+  display: inline-block;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid rgba(#cacaca, 0.7);
+  border-radius: 3px;
+  text-align: center;
+  line-height: 40px;
+  white-space: nowrap;
+  box-shadow: 0px 0px 4px 1px rgba(#cacaca, 0.7);
+  background: #fff;
+  outline: none;
+
+  &:hover {
+    cursor: pointer;
+    box-shadow: 0px 0px 2px 1px rgba(#cacaca, 0.7);
+  }
+  
+  &:active {
+    box-shadow: none;
+  }
+}
