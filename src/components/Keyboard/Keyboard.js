@@ -1,19 +1,38 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
-import useKeyboard from './useKeyboard';
 import { KEYBOARD_ACTION_TYPES } from './actionTypes';
 import { KEY_CODES } from './keyCodes';
 import KeyboardContext from './KeyboardContext';
 import Key from './Key';
 import styles from './styles.scss';
 
-function Keyboard() {
+function Keyboard(props) {
+  const { id } = props;
+
   const { dispatchKeyboardAction } = React.useContext(KeyboardContext);
 
-  const onKeyClick = (keyCode) => () => {
+  React.useEffect(() => {
+    dispatchKeyboardAction({
+      type: KEYBOARD_ACTION_TYPES.REGISTER_KEYBOARD,
+      payload: { id },
+    });
+
+    return () => {
+      dispatchKeyboardAction({
+        type: KEYBOARD_ACTION_TYPES.UNREGISTER_KEYBOARD,
+        payload: { id },
+      });
+    };
+  }, []);
+
+  const handleClick = (e) => {
+    console.log('!!!!!!!!!!!!!!!!');
+    console.log(e.target.getAttribute('data-code'));
+
     dispatchKeyboardAction({
       type: KEYBOARD_ACTION_TYPES.PRESS_KEY,
-      payload: { keyCode },
+      payload: { keyCode: '0' },
     });
   };
 
@@ -22,7 +41,7 @@ function Keyboard() {
 
     return (
       <div key={keyCode} className={styles.KeyWrapper}>
-        <Key onClick={onKeyClick(keyCode)}>
+        <Key keyCode={keyCode}>
           {keyCode}
         </Key>
       </div>
@@ -30,10 +49,14 @@ function Keyboard() {
   });
 
   return (
-    <div className={styles.Keyboard}>
+    <div id={id} className={styles.Keyboard} onMouseDown={handleClick}>
       {renderKeys()}
     </div>
   );
 }
+
+Keyboard.propTypes = {
+  id: PropTypes.string.isRequired,
+};
 
 export default Keyboard;

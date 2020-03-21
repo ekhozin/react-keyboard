@@ -1,48 +1,50 @@
 import React from 'react';
 
-import { KEYBOARD_ACTION_TYPES, KeyboardContext } from 'components/Keyboard';
+import { Field } from 'components/Form';
 
 function KeyboardForm() {
-  const { dispatchKeyboardAction, keyboardState } = React.useContext(KeyboardContext);
-
-  React.useEffect(() => {
-    dispatchKeyboardAction({
-      type: KEYBOARD_ACTION_TYPES.REGISTER_ITEM,
-      payload: { name: 'keyboard-input', value: 'test' },
-    });
-
-    return () => {
-      dispatchKeyboardAction({
-        type: KEYBOARD_ACTION_TYPES.UNREGISTER_ITEM,
-        payload: { name: 'keyboard-input' },
-      });
-    };
-  }, []);
-
-  const handleChange = (e) => {
-    dispatchKeyboardAction({
-      type: KEYBOARD_ACTION_TYPES.CHANGE_VALUE,
-      payload: { name: e.target.name, value: e.target.value },
-    });
-  };
-
-  const handleFocus = (e) => {
-    dispatchKeyboardAction({
-      type: KEYBOARD_ACTION_TYPES.FOCUS,
-      payload: { name: e.target.name },
-    });
-  };
-console.log('KeyboardForm::');
-console.log(keyboardState);
-
   return (
     <div>
-      <input
-        name='keyboard-input'
-        value={keyboardState['keyboard-input'] ? keyboardState['keyboard-input'].value : ''}
-        onFocus={handleFocus}
-        onChange={handleChange}
-      />
+      <div>
+        <Field
+          initialValue=''
+          name='name'
+          render={(renderProps) => {
+            const { handleFocus, handleChange, handleBlur, name, value } = renderProps;
+
+            return (
+              <input
+                placeholder='your name'
+                name={name}
+                value={value}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+                onChange={(e) => handleChange(e.target.value)}
+              />
+            );
+          }}
+        />
+      </div>
+      <div>
+        <Field
+          initialValue=''
+          name='surname'
+          render={(renderProps) => {
+            const { handleFocus, handleChange, handleBlur, name, value } = renderProps;
+
+            return (
+              <input
+                placeholder='your surname'
+                name={name}
+                value={value}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+                onChange={(e) => handleChange(e.target.value)}
+              />
+            );
+          }}
+        />
+      </div>
     </div>
   );
 }

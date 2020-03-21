@@ -3,10 +3,8 @@ import React from 'react';
 import Keyboard, { KeyboardContext, useKeyboard } from 'components/Keyboard';
 import KeyboardForm from 'components/KeyboardForm';
 
-const initial = {};
-
 function App() {
-  const initialKeyboard = useKeyboard(initial);
+  const initialKeyboard = useKeyboard();
 
   return (
     <KeyboardContext.Provider value={initialKeyboard}>
@@ -16,7 +14,7 @@ function App() {
         <br/>
         <hr/>
         <br/>
-        <Keyboard/>
+        <Keyboard id='general-keyboard'/>
       </div>
     </KeyboardContext.Provider>
   );
