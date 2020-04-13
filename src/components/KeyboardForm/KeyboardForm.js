@@ -14,6 +14,7 @@ function KeyboardForm() {
 
             return (
               <input
+                autoComplete='off'
                 placeholder='your name'
                 name={name}
                 value={value}
@@ -33,8 +34,13 @@ function KeyboardForm() {
             const { handleFocus, handleChange, handleBlur, name, value } = renderProps;
 
             return (
-              <input
-                placeholder='your surname'
+              <textarea
+                style={{
+                  width: 50,
+                  height: 50,
+                }}
+                autoComplete='off'
+                placeholder='comment'
                 name={name}
                 value={value}
                 onFocus={handleFocus}

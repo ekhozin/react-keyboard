@@ -26,21 +26,29 @@ function Keyboard(props) {
     };
   }, []);
 
-  const handleClick = (e) => {
-    console.log('!!!!!!!!!!!!!!!!');
-    console.log(e.target.getAttribute('data-code'));
+  const handleMouseDown = (e) => {
+    e.preventDefault();
+    const code = e.target.getAttribute('data-code');
+
+    if (!code) {
+      return;
+    }
 
     dispatchKeyboardAction({
       type: KEYBOARD_ACTION_TYPES.PRESS_KEY,
-      payload: { keyCode: '0' },
+      payload: { keyCode: code },
     });
+  };
+
+  const handleKeyClick = (e) => {
+    e.preventDefault();
   };
 
   const renderKeys = () => Object.entries(KEY_CODES).map((key) => {
     const [ ,keyCode ] = key;
 
     return (
-      <div key={keyCode} className={styles.KeyWrapper}>
+      <div key={keyCode} className={styles.KeyWrapper} onClick={handleKeyClick}>
         <Key keyCode={keyCode}>
           {keyCode}
         </Key>
@@ -49,7 +57,7 @@ function Keyboard(props) {
   });
 
   return (
-    <div id={id} className={styles.Keyboard} onMouseDown={handleClick}>
+    <div id={id} className={styles.Keyboard} onMouseDown={handleMouseDown}>
       {renderKeys()}
     </div>
   );

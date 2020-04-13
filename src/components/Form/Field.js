@@ -27,10 +27,11 @@ function Field(props) {
     });
   };
 
-  const handleFocus = () => {
+  const handleFocus = (e) => {
+    const event = e;
     dispatchKeyboardAction({
       type: KEYBOARD_ACTION_TYPES.FOCUS,
-      payload: { name, activeField: name },
+      payload: { name, activeField: event.target },
     });
   };
 

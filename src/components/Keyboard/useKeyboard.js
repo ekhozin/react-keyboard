@@ -1,10 +1,78 @@
 import React from 'react';
 import { KEYBOARD_ACTION_TYPES } from './actionTypes';
 
+function getInputSelection(el) {
+  let start = 0; let end = 0; let normalizedValue; let range;
+  let textInputRange; let len; let endRange;
+
+  if (typeof el.selectionStart === 'number' && typeof el.selectionEnd === 'number') {
+    start = el.selectionStart;
+    end = el.selectionEnd;
+  } else {
+    range = document.selection.createRange();
+
+    if (range && range.parentElement() === el) {
+      len = el.value.length;
+      normalizedValue = el.value.replace(/\r\n/g, '\n');
+
+      // Create a working TextRange that lives only in the input
+      textInputRange = el.createTextRange();
+      textInputRange.moveToBookmark(range.getBookmark());
+
+      // Check if the start and end of the selection are at the very end
+      // of the input, since moveStart/moveEnd doesn't return what we want
+      // in those cases
+      endRange = el.createTextRange();
+      endRange.collapse(false);
+
+      if (textInputRange.compareEndPoints('StartToEnd', endRange) > -1) {
+        start = end = len;
+      } else {
+        start = -textInputRange.moveStart('character', -len);
+        start += normalizedValue.slice(0, start).split('\n').length - 1;
+
+        if (textInputRange.compareEndPoints('EndToEnd', endRange) > -1) {
+          end = len;
+        } else {
+          end = -textInputRange.moveEnd('character', -len);
+          end += normalizedValue.slice(0, end).split('\n').length - 1;
+        }
+      }
+    }
+  }
+
+  return {
+    start,
+    end,
+  };
+}
+
+function offsetToRangeCharacterMove(el, offset) {
+  return offset - (el.value.slice(0, offset).split('\r\n').length - 1);
+}
+
+function setInputSelection(el, startOffset, endOffset) {
+  if (typeof el.selectionStart === 'number' && typeof el.selectionEnd === 'number') {
+    el.selectionStart = startOffset;
+    el.selectionEnd = endOffset;
+  } else {
+    let range = el.createTextRange();
+    let startCharMove = offsetToRangeCharacterMove(el, startOffset);
+    range.collapse(true);
+    if (startOffset === endOffset) {
+      range.move('character', startCharMove);
+    } else {
+      range.moveEnd('character', offsetToRangeCharacterMove(el, endOffset));
+      range.moveStart('character', startCharMove);
+    }
+    range.select();
+  }
+}
+
 function useKeyboard() {
   const initialState = {
     fields: {},
-    activeField: {},
+    activeField: null,
     keyboards: {},
   };
 
@@ -16,7 +84,6 @@ function useKeyboard() {
         [payload.name]: {
           value: payload.value,
           focused: false,
-          caretPosition: 0,
         },
       },
     };
@@ -39,6 +106,8 @@ function useKeyboard() {
   function handlePressKey(state, payload) {
     // TODO: 1) handle caret position
     // TODO: 2) handle key types
+    // console.log('handlePressKey::');
+    // console.log(state.activeField.target.selectionStart);
     const fields = Object.entries(state.fields).reduce((acc, item) => {
       const [name, params] = item;
 
@@ -46,11 +115,18 @@ function useKeyboard() {
         return acc;
       }
 
+      const activeElement = document.activeElement;
+      const sel = getInputSelection(activeElement);
+      console.log(sel);
+      const newValue = params.value.slice(0, sel.start) + payload.keyCode + params.value.slice(sel.end);
+      // TODO: why does not work?
+      setInputSelection(activeElement, sel.start + 1, sel.end + 1);
+
       return {
         ...acc,
         [name]: {
           ...params,
-          value: params.value + payload.keyCode,
+          value: newValue,
         },
       };
     }, state.fields);
@@ -79,7 +155,6 @@ function useKeyboard() {
         [payload.name]: {
           ...state.fields[payload.name],
           focused: true,
-          caretPosition: 0,
         },
       },
       activeField: payload.activeField,
@@ -94,9 +169,9 @@ function useKeyboard() {
         [payload.name]: {
           ...state.fields[payload.name],
           focused: false,
-          caretPosition: 0,
         },
       },
+      activeField: null,
     };
   }
 
@@ -129,8 +204,13 @@ function useKeyboard() {
   }
 
   const reducer = (state, action) => {
-    console.log('action::');
-    console.log(action);
+    // console.log('action::');
+    // console.log(action);
+
+    // console.log('state::');
+    // console.log(state.activeField);
+    // console.log(document.activeElement.selectionStart);
+    // console.count('===================================');
     switch (action.type) {
       case KEYBOARD_ACTION_TYPES.REGISTER_ITEM:
         return handleRegisterItem(state, action.payload);
@@ -153,20 +233,7 @@ function useKeyboard() {
     }
   };
 
-  function handleMouseDown(e) {
-    console.log('handleMouseDown:::::');
-    console.log(e.target);
-  }
-
   const [keyboardState, dispatchKeyboardAction] = React.useReducer(reducer, initialState);
-
-  // React.useEffect(() => {
-  //   document.addEventListener('mousedown', handleMouseDown);
-
-  //   return () => {
-  //     document.removeEventListener('mousedown', handleMouseDown);
-  //   };
-  // }, []);
 
   return {
     keyboardState,
