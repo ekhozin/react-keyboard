@@ -1,13 +1,14 @@
 import React from 'react';
 
-import Keyboard, { KeyboardContext, useKeyboard } from 'components/Keyboard';
+import { Keyboard, KeyboardContext } from 'components/Keyboard';
+import { useFormWithKeyboard } from 'components/Keyboard/useFormWithKeyboard';
 import KeyboardForm from 'components/KeyboardForm';
 
 function App() {
-  const initialKeyboard = useKeyboard();
+  const formWithKeyboard = useFormWithKeyboard();
 
   return (
-    <KeyboardContext.Provider value={initialKeyboard}>
+    <KeyboardContext.Provider value={formWithKeyboard}>
       <div>
         <h1>Keyboard!!!</h1>
         <KeyboardForm/>

@@ -1,23 +1,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { KEYBOARD_ACTION_TYPES, KeyboardContext } from 'components/Keyboard';
+import { KeyboardContext } from 'components/Keyboard';
 
 function Field(props) {
   const childRef = React.createRef();
-  const { dispatchKeyboardAction, keyboardState } = React.useContext(KeyboardContext);
+  const { actions, formState } = React.useContext(KeyboardContext);
   const { render, name, initialValue } = props;
 
   React.useEffect(() => {
-    dispatchKeyboardAction({
-      type: KEYBOARD_ACTION_TYPES.REGISTER_ITEM,
-      payload: { name, value: initialValue },
-    });
+    actions.registerField(name, initialValue);
 
     return () => {
-      dispatchKeyboardAction({
-        type: KEYBOARD_ACTION_TYPES.UNREGISTER_ITEM,
-        payload: { name },
-      });
+      actions.unregisterField(name);
     };
   }, []);
 
@@ -26,27 +20,18 @@ function Field(props) {
   };
 
   const handleChange = (value) => {
-    dispatchKeyboardAction({
-      type: KEYBOARD_ACTION_TYPES.CHANGE_VALUE,
-      payload: { name, value },
-    });
+    actions.changeFieldValue(name, value);
   };
 
   const handleFocus = () => {
-    dispatchKeyboardAction({
-      type: KEYBOARD_ACTION_TYPES.FOCUS,
-      payload: { name, activeField: childRef.current },
-    });
+    actions.focusField(name, childRef.current);
   };
 
   const handleBlur = () => {
-    dispatchKeyboardAction({
-      type: KEYBOARD_ACTION_TYPES.BLUR,
-      payload: { name },
-    });
+    actions.blurField(name);
   };
 
-  const value = keyboardState.fields[name] ? keyboardState.fields[name].value : initialValue;
+  const value = formState.fields[name] ? formState.fields[name].value : initialValue;
 
   const renderProps = {
     handleChange,

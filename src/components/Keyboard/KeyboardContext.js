@@ -1,8 +1,5 @@
 import React from 'react';
 
-// const initial = {
-//   fields: {},
-//   active: {},
-// };
+const KeyboardContext = React.createContext();
 
-export default React.createContext();
+export { KeyboardContext };
