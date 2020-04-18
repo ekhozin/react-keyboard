@@ -10,10 +10,11 @@ function KeyboardForm() {
           initialValue=''
           name='name'
           render={(renderProps) => {
-            const { handleFocus, handleChange, handleBlur, name, value } = renderProps;
+            const { handleFocus, handleChange, handleBlur, name, value, setRef } = renderProps;
 
             return (
               <input
+                ref={setRef}
                 autoComplete='off'
                 placeholder='your name'
                 name={name}
@@ -31,10 +32,11 @@ function KeyboardForm() {
           initialValue=''
           name='surname'
           render={(renderProps) => {
-            const { handleFocus, handleChange, handleBlur, name, value } = renderProps;
+            const { handleFocus, handleChange, handleBlur, name, value, setRef } = renderProps;
 
             return (
               <textarea
+                ref={setRef}
                 style={{
                   width: 50,
                   height: 50,

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { KEYBOARD_ACTION_TYPES, KeyboardContext } from 'components/Keyboard';
 
 function Field(props) {
+  const childRef = React.createRef();
   const { dispatchKeyboardAction, keyboardState } = React.useContext(KeyboardContext);
   const { render, name, initialValue } = props;
 
@@ -20,6 +21,10 @@ function Field(props) {
     };
   }, []);
 
+  const setRef = (renderNode) => {
+    childRef.current = renderNode;
+  };
+
   const handleChange = (value) => {
     dispatchKeyboardAction({
       type: KEYBOARD_ACTION_TYPES.CHANGE_VALUE,
@@ -27,11 +32,10 @@ function Field(props) {
     });
   };
 
-  const handleFocus = (e) => {
-    const event = e;
+  const handleFocus = () => {
     dispatchKeyboardAction({
       type: KEYBOARD_ACTION_TYPES.FOCUS,
-      payload: { name, activeField: event.target },
+      payload: { name, activeField: childRef.current },
     });
   };
 
@@ -50,6 +54,7 @@ function Field(props) {
     handleBlur,
     value,
     name,
+    setRef,
   };
 
   return render(renderProps);
