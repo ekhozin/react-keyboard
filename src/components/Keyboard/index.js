@@ -1,5 +1,4 @@
 export * from './Keyboard';
-export * from './KeyboardContext';
 export * from './keyCodes';
 export * from './selectionManager';
 export * from './useKeyboard';

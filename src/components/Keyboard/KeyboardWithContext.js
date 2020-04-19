@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { KeyboardContext } from './KeyboardContext';
+import { FormContext } from 'components/Form';
 import { Keyboard } from './Keyboard';
 
 function KeyboardWithContext() {
-  const { actions } = React.useContext(KeyboardContext);
+  const { actions } = React.useContext(FormContext);
 
   const handleMouseDown = (e) => {
     e.preventDefault();

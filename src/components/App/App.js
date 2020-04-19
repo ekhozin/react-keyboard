@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { KeyboardWithContext, KeyboardContext } from 'components/Keyboard';
+import { KeyboardWithContext } from 'components/Keyboard';
+import { FormContext } from 'components/Form';
 import { useFormWithKeyboard } from 'hooks';
 import { KeyboardForm } from 'components/KeyboardForm';
 
@@ -8,7 +9,7 @@ function App() {
   const formWithKeyboard = useFormWithKeyboard();
 
   return (
-    <KeyboardContext.Provider value={formWithKeyboard}>
+    <FormContext.Provider value={formWithKeyboard}>
       <div>
         <h1>Keyboard!!!</h1>
         <KeyboardForm/>
@@ -17,7 +18,7 @@ function App() {
         <br/>
         <KeyboardWithContext/>
       </div>
-    </KeyboardContext.Provider>
+    </FormContext.Provider>
   );
 }
 

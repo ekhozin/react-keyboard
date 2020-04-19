@@ -1,10 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { KeyboardContext } from 'components/Keyboard';
+import { FormContext } from './FormContext';
 
 function Field(props) {
   const childRef = React.createRef();
-  const { actions, formState } = React.useContext(KeyboardContext);
+  const { actions, formState } = React.useContext(FormContext);
   const { render, name, initialValue } = props;
 
   React.useEffect(() => {
