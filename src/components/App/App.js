@@ -1,8 +1,8 @@
 import React from 'react';
 
-import { Keyboard, KeyboardContext } from 'components/Keyboard';
-import { useFormWithKeyboard } from 'components/Keyboard/useFormWithKeyboard';
-import KeyboardForm from 'components/KeyboardForm';
+import { KeyboardWithContext, KeyboardContext } from 'components/Keyboard';
+import { useFormWithKeyboard } from 'hooks';
+import { KeyboardForm } from 'components/KeyboardForm';
 
 function App() {
   const formWithKeyboard = useFormWithKeyboard();
@@ -15,7 +15,7 @@ function App() {
         <br/>
         <hr/>
         <br/>
-        <Keyboard id='general-keyboard'/>
+        <KeyboardWithContext/>
       </div>
     </KeyboardContext.Provider>
   );

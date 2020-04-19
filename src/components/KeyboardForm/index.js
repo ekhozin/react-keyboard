@@ -1,1 +1,1 @@
-export { default } from './KeyboardForm';
+export * from './KeyboardForm';

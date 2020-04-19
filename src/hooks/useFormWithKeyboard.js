@@ -1,6 +1,6 @@
 import React from 'react';
-import { useForm } from './useForm';
-import { useKeyboard } from './useKeyboard';
+import { useForm } from 'components/Form';
+import { useKeyboard } from 'components/Keyboard';
 
 function useFormWithKeyboard() {
   const activeField = React.useRef(null);

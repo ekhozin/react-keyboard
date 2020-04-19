@@ -142,4 +142,4 @@ function useForm() {
   return { formState, actions };
 }
 
-export { useForm };
+export { useForm, ACTION_TYPES };

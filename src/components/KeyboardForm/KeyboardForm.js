@@ -57,4 +57,4 @@ function KeyboardForm() {
   );
 }
 
-export default KeyboardForm;
+export { KeyboardForm };

@@ -14,4 +14,4 @@ Key.propTypes = {
   keyCode: PropTypes.string.isRequired,
 };
 
-export default Key;
+export { Key };

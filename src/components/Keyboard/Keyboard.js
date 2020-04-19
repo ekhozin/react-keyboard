@@ -1,45 +1,42 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import { KEY_CODES } from './keyCodes';
-import { KeyboardContext } from './KeyboardContext';
-import Key from './Key';
+import { Key } from './Key';
 import styles from './styles.scss';
 
-function Keyboard() {
-  const { actions } = React.useContext(KeyboardContext);
+function Keyboard(props) {
+  const { onKeyClick, onKeyboardMouseDown } = props;
 
-  const handleMouseDown = (e) => {
-    e.preventDefault();
-    const code = e.target.getAttribute('data-code');
-
-    if (!code) {
-      return;
-    }
-
-    actions.pressKey(code);
-  };
-
-  const handleKeyClick = (e) => {
-    e.preventDefault();
-  };
-
-  const renderKeys = () => Object.entries(KEY_CODES).map((key) => {
+  const renderKeys = React.useMemo(() => Object.entries(KEY_CODES).map((key) => {
     const [ ,keyCode ] = key;
 
     return (
-      <div key={keyCode} className={styles.KeyWrapper} onClick={handleKeyClick}>
+      <div key={keyCode} className={styles.KeyWrapper} onClick={onKeyClick}>
         <Key keyCode={keyCode}>
           {keyCode}
         </Key>
       </div>
     );
-  });
+  }), []);
 
   return (
-    <div className={styles.Keyboard} onMouseDown={handleMouseDown}>
-      {renderKeys()}
+    <div className={styles.Keyboard} onMouseDown={onKeyboardMouseDown}>
+      {renderKeys}
     </div>
   );
 }
 
-export { Keyboard };
+Keyboard.propTypes = {
+  onKeyClick: PropTypes.func,
+  onKeyboardMouseDown: PropTypes.func,
+};
+
+Keyboard.defaultProps = {
+  onKeyClick: () => {},
+  onKeyboardMouseDown: () => {},
+};
+
+const KeyboardMemo = React.memo(Keyboard);
+
+export { KeyboardMemo as Keyboard };
