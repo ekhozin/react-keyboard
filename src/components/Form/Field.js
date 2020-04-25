@@ -1,43 +1,23 @@
-import React from 'react';
 import PropTypes from 'prop-types';
-import { FormContext } from './FormContext';
+import { useFormField } from './useFormField';
 
 function Field(props) {
-  const childRef = React.createRef();
-  const { actions, formState } = React.useContext(FormContext);
-  const { render, name, initialValue } = props;
-
-  React.useEffect(() => {
-    actions.registerField(name, initialValue);
-
-    return () => {
-      actions.unregisterField(name);
-    };
-  }, []);
-
-  const setRef = (renderNode) => {
-    childRef.current = renderNode;
-  };
-
-  const handleChange = (value) => {
-    actions.changeFieldValue(name, value);
-  };
-
-  const handleFocus = () => {
-    actions.focusField(name, childRef.current);
-  };
-
-  const handleBlur = () => {
-    actions.blurField(name);
-  };
-
-  const value = formState.fields[name] ? formState.fields[name].value : initialValue;
+  const { render, name, initialValue, validator } = props;
+  const {
+    handleChange,
+    handleFocus,
+    handleBlur,
+    setRef,
+    value,
+    error,
+  } = useFormField({ name, initialValue, validator });
 
   const renderProps = {
     handleChange,
     handleFocus,
     handleBlur,
     value,
+    error,
     name,
     setRef,
   };
@@ -49,6 +29,11 @@ Field.propTypes = {
   render: PropTypes.func.isRequired,
   name: PropTypes.string.isRequired,
   initialValue: PropTypes.any,
+  validator: PropTypes.func,
+};
+
+Field.defaultProps = {
+  validator: () => null,
 };
 
 export { Field };

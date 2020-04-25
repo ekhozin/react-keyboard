@@ -23,15 +23,18 @@ function useFormWithKeyboard() {
   };
 
   const pressKey = (keyCode) => {
-    const focusedField = Object.entries(formState.fields).find(([, { focused }]) => focused);
+    const focusedFieldName = Object.entries(formState.fields).reduce(
+      (result, [fieldName, { focused }]) => focused ? fieldName : result,
+      undefined
+    );
 
-    if (typeof focusedField === 'undefined') {
+    if (!focusedFieldName) {
       return;
     }
 
-    const [name, { value }] = focusedField;
+    const value = formState.values[focusedFieldName];
     const newValue = handlePressKey(keyCode, value, activeField.current);
-    changeFieldValueAction(name, newValue);
+    changeFieldValueAction(focusedFieldName, newValue);
   };
 
   const actions = {

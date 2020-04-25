@@ -7,23 +7,40 @@ const ACTION_TYPES = {
   CHANGE_VALUE: 'CHANGE_VALUE',
   FOCUS: 'FOCUS',
   BLUR: 'BLUR',
+  SET_ERROR: 'SET_ERROR',
 };
 
 function useForm() {
   const initialState = {
     fields: {},
+    values: {},
+    registeredFields: [],
   };
 
   function reducerRegisterField(state, payload) {
+    if (state.registeredFields.includes(payload.name)) {
+      console.error(`A field with the name "${payload.name}" has already been declarated. Choose other name.`);
+      return state;
+    }
+
     return {
       ...state,
       fields: {
         ...state.fields,
         [payload.name]: {
-          value: payload.value,
+          initialValue: payload.value,
           focused: false,
+          changed: false,
+          error: null,
+          validator: payload.validator,
+          validateOnBlur: payload.validateOnBlur,
         },
       },
+      values: {
+        ...state.values,
+        [payload.name]: payload.value,
+      },
+      registeredFields: [...state.registeredFields, payload.name],
     };
   }
 
@@ -38,18 +55,29 @@ function useForm() {
       return { ...acc, [name]: params };
     }, {});
 
-    return { ...state, fields };
+    const registeredFields = registeredFields.filter((field) => field !== payload.name);
+
+    return { ...state, fields, registeredFields };
   }
 
   function reducerChangeValue(state, payload) {
+    const field = state.fields[payload.name];
+
+    const newField = {
+      ...field,
+      changed: true,
+      error: field.validateOnBlur ? null : field.validator(state.values[payload.name], state.values),
+    };
+
     return {
       ...state,
       fields: {
         ...state.fields,
-        [payload.name]: {
-          ...state.fields[payload.name],
-          value: payload.value,
-        },
+        [payload.name]: newField,
+      },
+      values: {
+        ...state.values,
+        [payload.name]: payload.value,
       },
     };
   }
@@ -68,13 +96,30 @@ function useForm() {
   }
 
   function reducerBlur(state, payload) {
+    const field = state.fields[payload.name];
+    let newField = { ...field, focused: false };
+
+    if (field.validateOnBlur && field.changed) {
+      newField = { ...newField, error: field.validator(state.values[payload.name], state.values) };
+    }
+
+    return {
+      ...state,
+      fields: {
+        ...state.fields,
+        [payload.name]: newField,
+      },
+    };
+  }
+
+  function reducerError(state, payload) {
     return {
       ...state,
       fields: {
         ...state.fields,
         [payload.name]: {
           ...state.fields[payload.name],
-          focused: false,
+          error: payload.error,
         },
       },
     };
@@ -92,6 +137,8 @@ function useForm() {
         return reducerFocus(state, action.payload);
       case ACTION_TYPES.BLUR:
         return reducerBlur(state, action.payload);
+      case ACTION_TYPES.SET_ERROR:
+        return reducerError(state, action.payload);
       default:
         return state;
     }
@@ -99,10 +146,10 @@ function useForm() {
 
   const [formState, dispatchFormAction] = React.useReducer(reducer, initialState);
 
-  const registerField = (name, value) =>
+  const registerField = (payload) =>
     dispatchFormAction({
       type: ACTION_TYPES.REGISTER_FIELD,
-      payload: { name, value },
+      payload,
     });
 
   const unregisterField = (name) =>
@@ -131,12 +178,21 @@ function useForm() {
     });
   };
 
+  const setError = (name, error) => {
+    dispatchFormAction({
+      type: ACTION_TYPES.SET_ERROR,
+      payload: { name, error },
+    });
+  };
+
+
   const actions = {
     registerField,
     unregisterField,
     changeFieldValue,
     focusField,
     blurField,
+    setError,
   };
 
   return { formState, actions };
