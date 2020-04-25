@@ -7,7 +7,7 @@ const ACTION_TYPES = {
   CHANGE_VALUE: 'CHANGE_VALUE',
   FOCUS: 'FOCUS',
   BLUR: 'BLUR',
-  SET_ERROR: 'SET_ERROR',
+  SUBMIT: 'SUBMIT',
 };
 
 function useForm() {
@@ -112,17 +112,31 @@ function useForm() {
     };
   }
 
-  function reducerError(state, payload) {
-    return {
-      ...state,
-      fields: {
-        ...state.fields,
-        [payload.name]: {
-          ...state.fields[payload.name],
-          error: payload.error,
-        },
-      },
-    };
+  function reducerSubmitForm(state, payload) {
+    let hasErrors = false;
+
+    const fields = Object.entries(state.values).reduce((acc, entry) => {
+      const [fieldName, fieldValue] = entry;
+      const error = state.fields[fieldName].validator(fieldValue);
+
+      if (error) {
+        hasErrors = true;
+      }
+
+      acc[fieldName] = {
+        ...state.fields[fieldName],
+        error,
+      };
+
+      return acc;
+    }, {});
+
+    if (!hasErrors) {
+      payload.onSubmit(state.values);
+      return state;
+    }
+
+    return { ...state, fields };
   }
 
   const reducer = (state, action) => {
@@ -137,8 +151,8 @@ function useForm() {
         return reducerFocus(state, action.payload);
       case ACTION_TYPES.BLUR:
         return reducerBlur(state, action.payload);
-      case ACTION_TYPES.SET_ERROR:
-        return reducerError(state, action.payload);
+      case ACTION_TYPES.SUBMIT:
+        return reducerSubmitForm(state, action.payload);
       default:
         return state;
     }
@@ -185,6 +199,12 @@ function useForm() {
     });
   };
 
+  const submitForm = (onSubmit) => {
+    dispatchFormAction({
+      type: ACTION_TYPES.SUBMIT,
+      payload: { onSubmit },
+    });
+  };
 
   const actions = {
     registerField,
@@ -193,6 +213,7 @@ function useForm() {
     focusField,
     blurField,
     setError,
+    submitForm,
   };
 
   return { formState, actions };
