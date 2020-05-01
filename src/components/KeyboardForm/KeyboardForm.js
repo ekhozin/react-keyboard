@@ -17,7 +17,7 @@ ErrorMessage.propTypes = {
 const apiRequest = (values, isError = false) => new Promise((resolve, reject) => {
   setTimeout(() => {
     if (isError) {
-      reject({ name: 'Invalid name' });
+      reject({ _FORM: 'Invalid name' });
     }
 
     resolve(values);
@@ -28,20 +28,28 @@ function KeyboardForm() {
   const validateName = createValidateRequired();
   const validateMessage = composeValidators(createValidateRequired(), createValidateMaxLength(MAX_COMMENT_LENGTH));
 
-  const handleSubmit = (values) => apiRequest(values, false)
-    .then((values) => {
-      console.log('Submit success: ', values);
-    })
-    .catch((error) => {
-      console.log('Error', error);
-    });
+  const handleSubmit = (values, actions) => {
+    actions.submitFormStart();
+
+    return apiRequest(values, true)
+      .then((values) => {
+        actions.submitFormStop();
+        actions.setInitialValues();
+        console.log('Submit success: ', values);
+      })
+      .catch((error) => {
+        actions.submitFormStop();
+        actions.setErrors(error);
+        console.log('Error', error);
+      });
+  };
 
 
   return (
     <Form
       onSubmit={handleSubmit}
       render={(formProps) => {
-        const { submitForm } = formProps;
+        const { submitForm, submitting, formSubmitError } = formProps;
 
         return (
           <>
@@ -101,8 +109,9 @@ function KeyboardForm() {
                 }}
               />
             </div>
+            {formSubmitError && <ErrorMessage>{formSubmitError}</ErrorMessage>}
             <div>
-              <button onClick={submitForm}>Submit</button>
+              <button onClick={submitForm} disabled={submitting}>Submit</button>
             </div>
           </>
         );

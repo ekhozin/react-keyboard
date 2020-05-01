@@ -3,9 +3,17 @@ import PropTypes from 'prop-types';
 import { FormContext } from './FormContext';
 
 function Form(props) {
-  const { render, onSubmit } = props;
+  const { render, onSubmit, validateOnBlur } = props;
   const formStore = React.useContext(FormContext);
   const { actions, formState, validateForm } = formStore;
+
+  React.useEffect(() => {
+    actions.initializeForm({ validateOnBlur });
+
+    return () => {
+      actions.resetFormState();
+    };
+  }, []);
 
   const renderProps = {
     submitForm: () => {
@@ -15,9 +23,19 @@ function Form(props) {
         return;
       }
 
-      onSubmit(formState.values);
-      actions.submitForm();
+      onSubmit(
+        formState.values,
+        {
+          submitFormStart: actions.submitFormStart,
+          submitFormStop: actions.submitFormStop,
+          setErrors: actions.setErrors,
+          setInitialValues: actions.setInitialValues,
+          resetErrors: actions.resetErrors,
+        }
+      );
     },
+    submitting: formState.submitting,
+    formSubmitError: formState.formSubmitError,
   };
 
   return render(renderProps);
@@ -26,10 +44,12 @@ function Form(props) {
 Form.propTypes = {
   render: PropTypes.func.isRequired,
   onSumbit: PropTypes.func,
+  validateOnBlur: PropTypes.bool,
 };
 
 Form.defaultProps = {
   onSumbit: () => {},
+  validateOnBlur: true,
 };
 
 export { Form };

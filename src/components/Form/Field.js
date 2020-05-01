@@ -32,8 +32,4 @@ Field.propTypes = {
   validator: PropTypes.func,
 };
 
-Field.defaultProps = {
-  validator: () => null,
-};
-
 export { Field };

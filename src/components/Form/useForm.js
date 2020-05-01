@@ -1,4 +1,5 @@
 import React from 'react';
+import { omit } from './tools';
 
 const ACTION_TYPES = {
   REGISTER_FIELD: 'REGISTER_FIELD',
@@ -7,20 +8,27 @@ const ACTION_TYPES = {
   CHANGE_VALUE: 'CHANGE_VALUE',
   FOCUS: 'FOCUS',
   BLUR: 'BLUR',
-  SUBMIT: 'SUBMIT',
-  SUBMIT_SUCCESS: 'SUBMIT_SUCCESS',
-  SUBMIT_ERROR: 'SUBMIT_ERROR',
+  SUBMIT_FORM_START: 'SUBMIT_FORM_START',
+  SUBMIT_FORM_STOP: 'SUBMIT_FORM_STOP',
   SET_VALIDATION_ERRORS: 'SET_VALIDATION_ERRORS',
+  INITIALIZE_FORM: 'INITIALIZE_FORM',
+  RESET_FORM_STATE: 'RESET_FORM_STATE',
+  RESET_ERRORS: 'RESET_ERRORS',
+  SET_INITIAL_VALUES: 'SET_INITIAL_VALUES',
 };
 
 function useForm() {
   const initialState = {
-    fields: {},
+    registeredFields: [],
     values: {},
     errors: {},
-    registeredFields: [],
+    changed: {},
+    initialValues: {},
+    validators: {},
+    focusedField: '',
     submitting: false,
     formSubmitError: null,
+    validateOnBlur: true,
   };
 
   function reducerRegisterField(state, payload) {
@@ -29,69 +37,44 @@ function useForm() {
       return state;
     }
 
+    const validators =
+      typeof payload.validator === 'function' ?
+        { ...state.validators, [payload.name]: payload.validator } : state.validators;
+
     return {
       ...state,
-      fields: {
-        ...state.fields,
-        [payload.name]: {
-          initialValue: payload.value,
-          focused: false,
-          changed: false,
-          validator: payload.validator,
-          validateOnBlur: payload.validateOnBlur,
-        },
-      },
+      validators,
+      initialValues: { ...state.initialValues, [payload.name]: payload.value },
+      changed: { ...state.changed, [payload.name]: false },
       values: { ...state.values, [payload.name]: payload.value },
-      registeredFields: [...state.registeredFields, payload.name],
       errors: { ...state.errors, [payload.name]: null },
+      registeredFields: [...state.registeredFields, payload.name],
     };
   }
 
-  // TODO: remove all info about field
   function reducerUnregisterField(state, payload) {
-    const fields = Object.entries(state.fields).reduce((acc, item) => {
-      const [name, params] = item;
-
-      if (name === payload.name) {
-        return acc;
-      }
-
-      return { ...acc, [name]: params };
-    }, {});
-
-    const registeredFields = registeredFields.filter((field) => field !== payload.name);
-
-    const errors = registeredFields.reduce(
-      (acc, fieldName) => fieldName === payload.name ? acc : { ...acc, [fieldName]: state.errors[fieldName] },
-      {},
-    );
-
-    const values = registeredFields.reduce(
-      (acc, fieldName) => fieldName === payload.name ? acc : { ...acc, [fieldName]: state.values[fieldName] },
-      {},
-    );
-
-    return { ...state, fields, registeredFields, errors, values };
+    return {
+      ...state,
+      registeredFields: state.registeredFields.filter((field) => field !== payload.name),
+      errors: omit(state.errors, payload.name),
+      values: omit(state.values, payload.name),
+      changed: omit(state.changed, payload.name),
+      focusedField: state.focusedField === payload.name ? '' : state.focusedField,
+      validators: omit(state.validators, payload.name),
+    };
   }
 
   function reducerChangeValue(state, payload) {
-    const field = state.fields[payload.name];
-
     return {
       ...state,
-      fields: {
-        ...state.fields,
-        [payload.name]: { ...field, changed: true },
-      },
-      values: {
-        ...state.values,
-        [payload.name]: payload.value,
-      },
+      values: { ...state.values, [payload.name]: payload.value },
+      changed: { ...state.changed, [payload.name]: true },
       errors: state.registeredFields.reduce((acc, fieldName) => {
-        if (payload.name === fieldName) {
+        if (payload.name === fieldName && state.validators[fieldName]) {
           return {
             ...acc,
-            [fieldName]: field.validateOnBlur ? null : field.validator(state.values[payload.name], state.values),
+            [fieldName]: state.validateOnBlur ?
+              null : state.validators[fieldName](state.values[fieldName], state.values),
           };
         }
 
@@ -101,106 +84,81 @@ function useForm() {
   }
 
   function reducerFocus(state, payload) {
-    return {
-      ...state,
-      fields: {
-        ...state.fields,
-        [payload.name]: {
-          ...state.fields[payload.name],
-          focused: true,
-        },
-      },
-    };
+    return { ...state, focusedField: payload.name };
   }
 
   function reducerBlur(state, payload) {
-    const field = state.fields[payload.name];
-    let newField = { ...field, focused: false };
     let newErrors = state.errors;
 
-    if (field.validateOnBlur && field.changed) {
-      newErrors = state.registeredFields.reduce((acc, fieldName) => {
-        if (payload.name === fieldName) {
-          return { ...acc, [fieldName]: field.validator(state.values[fieldName], state.values) };
-        }
-
-        return acc;
-      }, state.errors);
+    if (state.validateOnBlur && state.changed[payload.name] && state.validators[payload.name]) {
+      newErrors = state.registeredFields.reduce(
+        (acc, fieldName) =>
+          payload.name === fieldName ?
+            { ...acc, [fieldName]: state.validators[fieldName](state.values[fieldName], state.values) } : acc,
+        state.errors,
+      );
     }
 
-    return {
-      ...state,
-      fields: {
-        ...state.fields,
-        [payload.name]: newField,
-      },
-      errors: newErrors,
-    };
+    return { ...state, focusedField: '', errors: newErrors };
   }
 
-  // TODO: is it needed?
-  function reducerSubmitForm(state) {
-    let hasErrors = false;
-
-    const fields = Object.entries(state.values).reduce((acc, entry) => {
-      const [fieldName, fieldValue] = entry;
-      const error = state.fields[fieldName].validator(fieldValue);
-
-      if (error) {
-        hasErrors = true;
-      }
-
-      acc[fieldName] = {
-        ...state.fields[fieldName],
-        error,
-      };
-
-      return acc;
-    }, {});
-
-    if (!hasErrors) {
-      return {
-        ...state,
-        fields: Object.entries(state.fields).reducer((acc, entry) => {
-          const [fieldName, fieldData] = entry;
-          acc[fieldName] = { ...fieldData, error: null, changed: false };
-
-          return acc;
-        }, {}),
-      };
-    }
-
-    return { ...state, submitting: true, fields };
+  function reducerSubmitFormStart(state) {
+    return { ...state, submitting: true };
   }
-  // TODO: is it needed?
-  function reducerSubmitSuccess(state) {
+
+  function reducerSubmitFormStop(state) {
     return { ...state, submitting: false };
   }
-  // TODO: is it needed?
-  function reducerSubmitError(state, payload) {
-    const { errors } = payload;
-    const { _FORM = null, ...restErrors } = errors;
 
-    const fields = Object.entries(state.fields).reducer((acc, entry) => {
-      const [fieldName, fieldData] = entry;
+  function reducersetErrors(state, payload) {
+    const { _FORM = null, ...fieldErrors } = payload.errors;
 
-      if (restErrors[fieldName]) {
-        acc[fieldName] = { ...fieldData, error: restErrors[fieldName] };
-      }
-
-      return acc;
-    }, {});
-
-    return { ...state, fields, submitting: false, formSubmitError: _FORM };
-  }
-
-  function reducerSetValidationErrors(state, payload) {
     return {
       ...state,
-      errors: { ...state.errors, ...payload.errors },
+      errors: { ...state.errors, ...fieldErrors },
+      formSubmitError: _FORM,
     };
   }
 
+  function reducerInitializeForm(state, payload) {
+    return { ...state, validateOnBlur: payload.validateOnBlur };
+  }
+
+  function reducerResetFormState() {
+    return initialState;
+  }
+
+  // TODO: refactor
+  function reducerResetErrors(state, payload) {
+    const { fieldNames } = payload;
+
+    const handler = fieldNames.length ?
+      ((acc, fieldName) => fieldNames.includes(fieldName) ? { ...acc, [fieldName]: null } : acc) :
+      ((acc, fieldName) => ({ ...acc, [fieldName]: null }));
+
+    return {
+      ...state,
+      errors: fieldNames.reduce(handler, state.errors),
+    };
+  }
+
+  function reducerSetInitialValues(state) {
+    const values = state.registeredFields.reduce(
+      (acc, fieldName) => ({ ...acc, [fieldName]: state.initialValues[fieldName] }),
+      {},
+    );
+
+    return {
+      ...state,
+      values,
+    };
+  }
+
+  /**
+   * REDUCER.
+   * @param {Object} state
+   * @param {Object} action
+   */
   const reducer = (state, action) => {
     switch (action.type) {
       case ACTION_TYPES.REGISTER_FIELD:
@@ -213,14 +171,20 @@ function useForm() {
         return reducerFocus(state, action.payload);
       case ACTION_TYPES.BLUR:
         return reducerBlur(state, action.payload);
-      case ACTION_TYPES.SUBMIT:
-        return reducerSubmitForm(state);
-      case ACTION_TYPES.SUBMIT_SUCCESS:
-        return reducerSubmitSuccess(state);
-      case ACTION_TYPES.SUBMIT_ERROR:
-        return reducerSubmitError(state, action.payload);
+      case ACTION_TYPES.SUBMIT_FORM_START:
+        return reducerSubmitFormStart(state);
+      case ACTION_TYPES.SUBMIT_FORM_STOP:
+        return reducerSubmitFormStop(state);
       case ACTION_TYPES.SET_VALIDATION_ERRORS:
-        return reducerSetValidationErrors(state, action.payload);
+        return reducersetErrors(state, action.payload);
+      case ACTION_TYPES.INITIALIZE_FORM:
+        return reducerInitializeForm(state, action.payload);
+      case ACTION_TYPES.RESET_FORM_STATE:
+        return reducerResetFormState();
+      case ACTION_TYPES.RESET_ERRORS:
+        return reducerResetErrors(state, action.payload);
+      case ACTION_TYPES.SET_INITIAL_VALUES:
+        return reducerSetInitialValues(state);
       default:
         return state;
     }
@@ -260,35 +224,48 @@ function useForm() {
     });
   };
 
-  const setError = (name, error) => {
+  const submitFormStart = () => {
     dispatchFormAction({
-      type: ACTION_TYPES.SET_ERROR,
-      payload: { name, error },
+      type: ACTION_TYPES.SUBMIT_FORM_START,
     });
   };
 
-  const submitForm = () => {
+  const submitFormStop = () => {
     dispatchFormAction({
-      type: ACTION_TYPES.SUBMIT,
+      type: ACTION_TYPES.SUBMIT_FORM_STOP,
     });
   };
 
-  const submitSuccess = () => {
-    dispatchFormAction({
-      type: ACTION_TYPES.SUBMIT_SUCCESS,
-    });
-  };
-
-  const submitError = () => {
-    dispatchFormAction({
-      type: ACTION_TYPES.SUBMIT_ERROR,
-    });
-  };
-
-  const setValidationErrors = (errors) => {
+  const setErrors = (errors) => {
     dispatchFormAction({
       type: ACTION_TYPES.SET_VALIDATION_ERRORS,
       payload: { errors },
+    });
+  };
+
+  const initializeForm = (params) => {
+    dispatchFormAction({
+      type: ACTION_TYPES.INITIALIZE_FORM,
+      payload: params,
+    });
+  };
+
+  const resetFormState = () => {
+    dispatchFormAction({
+      type: ACTION_TYPES.RESET_FORM_STATE,
+    });
+  };
+
+  const resetErrors = (fieldNames = []) => {
+    dispatchFormAction({
+      type: ACTION_TYPES.RESET_ERRORS,
+      payload: { fieldNames },
+    });
+  };
+
+  const setInitialValues = () => {
+    dispatchFormAction({
+      type: ACTION_TYPES.SET_INITIAL_VALUES,
     });
   };
 
@@ -298,28 +275,37 @@ function useForm() {
     changeFieldValue,
     focusField,
     blurField,
-    setError,
-    submitForm,
-    submitSuccess,
-    submitError,
-    setValidationErrors,
+    submitFormStart,
+    submitFormStop,
+    setErrors,
+    initializeForm,
+    resetFormState,
+    resetErrors,
+    setInitialValues,
   };
 
   /**
    * HELPERS
    */
   function validateForm() {
+    let hasErrors = false;
+
     const errors = formState.registeredFields.reduce((acc, fieldName) => {
       const fieldValue = formState.values[fieldName];
-      const fieldValidator = formState.fields[fieldName].validator;
+      const fieldValidator = formState.validators[fieldName];
 
-      acc[fieldName] = fieldValidator(fieldValue);
+      if (!fieldValidator) {
+        return acc;
+      }
 
-      return acc;
-    }, {});
+      const error = fieldValidator(fieldValue);
+      hasErrors = error !== null;
 
-    if (Object.values(errors).some((err) => err !== null)) {
-      setValidationErrors(errors);
+      return { ...acc, [fieldName]: error };
+    }, formState.errors);
+
+    if (hasErrors) {
+      setErrors(errors);
       return errors;
     }
 

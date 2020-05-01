@@ -43,8 +43,8 @@ function useFormField(fieldProps) {
     setRef,
     value: isRegistered ? formState.values[name] : initialValue,
     error: isRegistered ? formState.errors[name] : null,
-    focused: isRegistered ? formState.fields[name].focused : false,
-    changed:  isRegistered ? formState.fields[name].changed : false,
+    focused: isRegistered ? formState.focusedField === name : false,
+    changed:  isRegistered ? formState.changed[name] : false,
   };
 }
 
