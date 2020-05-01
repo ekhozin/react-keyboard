@@ -42,7 +42,7 @@ function useFormField(fieldProps) {
     handleBlur,
     setRef,
     value: isRegistered ? formState.values[name] : initialValue,
-    error: isRegistered ? formState.fields[name].error : null,
+    error: isRegistered ? formState.errors[name] : null,
     focused: isRegistered ? formState.fields[name].focused : false,
     changed:  isRegistered ? formState.fields[name].changed : false,
   };

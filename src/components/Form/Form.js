@@ -4,10 +4,20 @@ import { FormContext } from './FormContext';
 
 function Form(props) {
   const { render, onSubmit } = props;
-  const { actions } = React.useContext(FormContext);
+  const formStore = React.useContext(FormContext);
+  const { actions, formState, validateForm } = formStore;
 
   const renderProps = {
-    submitForm: () => actions.submitForm(onSubmit),
+    submitForm: () => {
+      const errors = validateForm();
+
+      if (errors) {
+        return;
+      }
+
+      onSubmit(formState.values);
+      actions.submitForm();
+    },
   };
 
   return render(renderProps);

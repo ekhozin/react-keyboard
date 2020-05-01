@@ -28,7 +28,7 @@ function KeyboardForm() {
   const validateName = createValidateRequired();
   const validateMessage = composeValidators(createValidateRequired(), createValidateMaxLength(MAX_COMMENT_LENGTH));
 
-  const handleSubmit = (values) => apiRequest(values)
+  const handleSubmit = (values) => apiRequest(values, false)
     .then((values) => {
       console.log('Submit success: ', values);
     })

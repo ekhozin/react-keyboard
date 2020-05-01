@@ -5,7 +5,7 @@ import { useKeyboard } from 'components/Keyboard';
 function useFormWithKeyboard() {
   const activeField = React.useRef(null);
 
-  const { formState, actions: formActions } = useForm();
+  const { formState, actions: formActions, ...restStoreData } = useForm();
   const handlePressKey = useKeyboard();
 
   const blurFieldAction = formActions.blurField;
@@ -44,7 +44,7 @@ function useFormWithKeyboard() {
     pressKey,
   };
 
-  return { formState, actions };
+  return { formState, actions, ...restStoreData };
 }
 
 export { useFormWithKeyboard };
